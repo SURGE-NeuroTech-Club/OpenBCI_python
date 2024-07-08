@@ -1,12 +1,20 @@
-# Using LSL/Brainflow with OpenBCI
+# Online SSVEP 
 
-`python openbci_lsl.py --stream`
+This repository holds code for using the brainflow library with an OpenBCI Cyton board to make a real-time (online) steady-state visually evoked potential (SSVEP) brain-computer interface (BCI) demo.
 
-`/loc F3,F4,C3,C4,T3,T4,P3,P4`
+`main.py`: the online BCI system
 
-For SSVEP: Oz, O1, O2, pOz, PO3, PO4, Pz (+ reference?)
-    --> https://www.researchgate.net/publication/349257316/figure/fig2/AS:990562102571009@1613179817695/a-The-10-10-electrode-placement-system-Bold-10-20-system-b-The-cerebral-lobes-and.ppm
+*Modules/*: Each file should contain documentation on classes & functions
+- `stream_data.py`: A custom class that uses the brainflow library to connect and stream from the Cyton Board
+- `preprocessing.py`: Class that contains functions to segment, filter, and save data
+- `canonical_corr.py`: Class that generates harmonics and uses canonical correlation analysis (CCA) to classify SSVEP data
+- `stim_pres.py`: Code related to stimulus presentation (i.e., flickering stimuli to elicit SSVEP)
+- `maintenence.py`: Code related to listening for the 'esc' key and raising stop flags
 
+*Other:*
+- `sim_ssvep_data.npy`: simulated SSVEP data in shape (8, 15000) 
+  - 8 channels, 15000 samples (60 seconds at 250 Hz Sample Rate)
+  - Simulated SSVEP signal changes between [9.25, 11.25, 13.25, 15.25] Hz every 10 seconds
 
 ## Links/Reference
 

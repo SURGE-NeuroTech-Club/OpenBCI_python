@@ -4,17 +4,20 @@ _EEG Data Processing/Classification_
 - [X] Get Board data streaming
 - [ ] Process Data
   - [X] Segment Data
-  - [ ] Filter [Brainflow/External?]
-- [ ] Signal Generation (harmonics) --> Vishal's code
-  - [ ] 
+  - [ ] Filter [Brainflow/External?] --> **Need to Test!**
+- [X] Signal Generation (harmonics) --> Vishal's code
 - [ ] Feature Extraction/Classification [CCA]
   - [ ] Feedback/Output Signal [loops into function]
 
 _Signal Elicitation/Presentation Paradigm_
 - [ ] Make SSVEP paradigm [pygame]
+  - [ ] Test that we can elicit the inteded SSVEP frequencie(s)
   - [ ] Integrate into program
 
 
+
+For SSVEP: Oz, O1, O2, pOz, PO3, PO4, Pz (+ reference?)
+    --> https://www.researchgate.net/publication/349257316/figure/fig2/AS:990562102571009@1613179817695/a-The-10-10-electrode-placement-system-Bold-10-20-system-b-The-cerebral-lobes-and.ppm
 
 Brainflow has it's own filtering/ML?
 - https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-ml-model
