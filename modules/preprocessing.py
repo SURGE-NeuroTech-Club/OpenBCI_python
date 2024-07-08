@@ -40,6 +40,23 @@ class PreProcess:
             return segment
         return None
 
+    # def filter_data(self, data, lowcut=0.5, highcut=30.0, order=5):
+    #     """
+    #     Applies a bandpass filter to the EEG data using BrainFlow library.
+
+    #     Args:
+    #         data (np.ndarray): The EEG data to be filtered.
+    #         lowcut (float): The low cut frequency in Hz.
+    #         highcut (float): The high cut frequency in Hz.
+    #         order (int): The order of the filter.
+
+    #     Returns:
+    #         np.ndarray: The filtered EEG data.
+    #     """
+    #     for channel in range(data.shape[0]):
+    #         DataFilter.perform_bandpass(data[channel], self.sampling_rate, lowcut, highcut, order, FilterTypes.BUTTERWORTH, 0)
+    #     return data
+
     def filter_data(self, data):
         """
         Applies a bandpass filter to the EEG data.

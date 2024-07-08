@@ -1,7 +1,7 @@
 import numpy as np
 from mvlearn.embed import CCA
 
-class SSVEPHarmonics:
+class ClassifySSVEP:
     """
     A class to generate and handle harmonics for SSVEP (Steady-State Visual Evoked Potential) BCI systems.
 

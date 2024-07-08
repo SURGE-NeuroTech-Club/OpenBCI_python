@@ -61,8 +61,8 @@ if __name__ == "__main__":
     ## Initializing Segmenter Class
     segmenter = PreProcess(board, segment_duration=segment_duration)
     
-    # Initialize the SSVEP harmonics handler
-    ssvep = SSVEPHarmonics(frequencies, harmonics, sampling_rate, n_samples)
+    # Initialize the SSVEP Classification & Harmonics handler
+    classifier = ClassifySSVEP(frequencies, harmonics, sampling_rate, n_samples)
     
     # Start the stimulus presentation in a separate thread
     stimulus_thread = threading.Thread(target=run_stimulus)
@@ -73,15 +73,16 @@ if __name__ == "__main__":
             # Step 1: Get a segment of data
             segment = segmenter.get_segment()
             if segment is not None:
-                print(f"Segment shape: {segment.shape}")
+                
+                # print(f"Segment shape: {segment.shape}")
                 
                 # Step 2: Filter the data
                 filtered_segment = segmenter.filter_data(segment)
                 print("Filtered data shape:", filtered_segment.shape)
 
-                # Step 4: Classify the features
-                # prediction = cca_model.predict(features)
-                # print("Prediction:", prediction)
+                # Step 3: Use CCA to match the EEG & Reference (harmonic) signals
+                detected_freq, correlation = classifier.cca_analysis(filtered_segment)
+                print(f"Detected frequency: {detected_freq} Hz with correlation: {correlation}")
 
                 # Optionally save or process the data further
                 # segmenter.save_data(filtered_data, "filtered_data.csv")
