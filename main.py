@@ -16,6 +16,7 @@ frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA &
 buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
 button_pos = [0, 2, 3, 1] # Assigns positions to custom text - must be same length as buttons
 segment_duration = 4 # seconds
+display = 0 # Which screen to display the stimulus paradigm on --> 0 is default
 
 # Static Variables - Probably don't need to touch :)
 harmonics = np.arange(1, 4) # Generates the 1st, 2nd, & 3rd Harmonics
@@ -33,7 +34,7 @@ print(f"Default Channels: {eeg_channels}")
 print(f"Channel Mapping: {channel_mapping}")
 
 def run_stimulus():
-    stimulus = SSVEPStimulus(frequencies, box_texts=buttons, box_text_indices=button_pos, show_both=True)
+    stimulus = SSVEPStimulus(frequencies, box_texts=buttons, box_text_indices=button_pos, show_both=True, display_index=display)
     stimulus.run()
 
 if __name__ == "__main__":     
