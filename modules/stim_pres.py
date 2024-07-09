@@ -4,7 +4,35 @@ import math
 import time
 
 class SSVEPStimulus:
-    def __init__(self, box_frequencies, screen_resolution=None):
+    """
+    Class to handle the stimulus presentation paradigm for an SSVEP BCI system using flickering boxes.
+    
+    Attributes:
+        boxes (list): A list of dictionaries containing box properties (position, flickering frequency, and text/symbol).
+        screen (pygame.Surface): The Pygame screen surface.
+        screen_width (int): The width of the screen.
+        screen_height (int): The height of the screen.
+        background_color (pygame.Color): The background color of the screen.
+        box_color (pygame.Color): The color of the boxes.
+        start_button (pygame.Rect): The start button rectangle.
+        start_button_color (pygame.Color): The color of the start button.
+        start_text (pygame.Surface): The text surface for the start button.
+        start (bool): Flag to start the flickering boxes.
+    """
+
+    def __init__(self, box_frequencies, box_texts=None, show_both=False, screen_resolution=None):
+        """
+        Initializes the SSVEPStimulus class.
+        
+        Args:
+            box_frequencies (list): List of flickering frequencies for the boxes.
+            box_texts (list, optional): List of texts or symbols to display on the boxes. Defaults to None.
+            show_both (bool, optional): Flag to show both box_text and frequency. Defaults to False.
+            screen_resolution (tuple, optional): Screen resolution (width, height). Defaults to None (fullscreen).
+        """
+        if box_texts and len(box_frequencies) != len(box_texts):
+            raise ValueError("The length of box_frequencies and box_texts must be the same if box_texts is provided.")
+        
         pygame.init()
         
         if screen_resolution:
@@ -15,12 +43,22 @@ class SSVEPStimulus:
         self.screen_width, self.screen_height = self.screen.get_size()
         pygame.display.set_caption("Flickering Boxes")
         
-        self.boxes = [
-            {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[0]},
-            {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[1]},
-            {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[2]},
-            {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[3]},
-        ]
+        sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
+        interleaved_indices = []
+
+        # Interleave frequencies to maximize distance between similar frequencies
+        left = 0
+        right = len(sorted_indices) - 1
+        while left <= right:
+            if left == right:
+                interleaved_indices.append(sorted_indices[left])
+            else:
+                interleaved_indices.append(sorted_indices[left])
+                interleaved_indices.append(sorted_indices[right])
+            left += 1
+            right -= 1
+
+        self.boxes = [{"rect": pygame.Rect(0, 0, 150, 150), "frequency": box_frequencies[i], "text": box_texts[i] if box_texts else None} for i in interleaved_indices]
         
         self.background_color = pygame.Color('black')
         self.box_color = pygame.Color('white')
@@ -30,9 +68,13 @@ class SSVEPStimulus:
         self.start_text = pygame.font.Font(None, 36).render('Start', True, pygame.Color('white'))
         self.start = False
         
-        self.font = pygame.font.Font(None, 36)  # Font for displaying frequencies
+        self.font = pygame.font.Font(None, 36)  # Font for displaying frequencies and texts/symbols
+        self.show_both = show_both  # Flag to show both text and frequency
 
     def run(self):
+        """
+        Runs the main loop to handle the stimulus presentation.
+        """
         running = True
         while running:
             for event in pygame.event.get():
@@ -52,22 +94,31 @@ class SSVEPStimulus:
                 self.screen.blit(self.start_text, (self.start_button.x + 10, self.start_button.y + 10))
             else:
                 current_time = time.time()
-                edge_offset = 100
-                box_size = 150
-                offset = 300
+                
                 centerX, centerY = self.screen_width // 2, self.screen_height // 2
-
-                self.boxes[0]["rect"].center = (centerX, centerY - offset)
-                self.boxes[2]["rect"].center = (centerX, centerY + offset)
-                self.boxes[3]["rect"].center = (edge_offset + box_size // 2, centerY)
-                self.boxes[1]["rect"].center = (self.screen_width - edge_offset - box_size // 2, centerY)
-
-                for box in self.boxes:
+                radius = min(self.screen_width, self.screen_height) // 3
+                num_boxes = len(self.boxes)
+                
+                for i, box in enumerate(self.boxes):
+                    angle = 2 * math.pi * i / num_boxes
+                    box["rect"].center = (centerX + int(radius * math.cos(angle)), centerY + int(radius * math.sin(angle)))
+                    
                     if math.sin(current_time * box["frequency"] * math.pi) > 0:
                         pygame.draw.rect(self.screen, self.box_color, box["rect"])
-                        frequency_text = self.font.render(f"{box['frequency']} Hz", True, pygame.Color('black'))
-                        text_rect = frequency_text.get_rect(center=box["rect"].center)
-                        self.screen.blit(frequency_text, text_rect)
+                        if self.show_both and box["text"]:
+                            # Display both text and frequency
+                            text_surface = self.font.render(box["text"], True, pygame.Color('black'))
+                            text_rect = text_surface.get_rect(center=(box["rect"].centerx, box["rect"].centery - 10))
+                            self.screen.blit(text_surface, text_rect)
+                            
+                            frequency_text = self.font.render(f"{box['frequency']} Hz", True, pygame.Color('black'))
+                            frequency_rect = frequency_text.get_rect(center=(box["rect"].centerx, box["rect"].centery + 20))
+                            self.screen.blit(frequency_text, frequency_rect)
+                        else:
+                            display_text = box["text"] if box["text"] else f"{box['frequency']} Hz"
+                            text_surface = self.font.render(display_text, True, pygame.Color('black'))
+                            text_rect = text_surface.get_rect(center=box["rect"].center)
+                            self.screen.blit(text_surface, text_rect)
 
             pygame.display.flip()
             pygame.time.wait(10)
@@ -75,134 +126,9 @@ class SSVEPStimulus:
         pygame.quit()
         sys.exit()
 
-
-
-
-# import pygame
-# import sys
-# import math
-# import time
-
-# class SSVEPStimulus:
-#     """
-#     Class to handle the stimulus presentation paradigm for an SSVEP BCI system using flickering boxes.
-    
-#     Attributes:
-#         boxes (list): A list of dictionaries containing box properties (position and flickering frequency).
-#         screen (pygame.Surface): The Pygame screen surface.
-#         screen_width (int): The width of the screen.
-#         screen_height (int): The height of the screen.
-#         background_color (pygame.Color): The background color of the screen.
-#         box_color (pygame.Color): The color of the boxes.
-#         start_button (pygame.Rect): The start button rectangle.
-#         start_button_color (pygame.Color): The color of the start button.
-#         start_text (pygame.Surface): The text surface for the start button.
-#         start (bool): Flag to start the flickering boxes.
-#     """
-
-#     def __init__(self, box_frequencies, screen_resolution=None):
-#         """
-#         Initializes the SSVEPStimulus class.
-        
-#         Args:
-#             box_frequencies (list): List of flickering frequencies for the boxes.
-#             screen_resolution (tuple, optional): Screen resolution (width, height). Defaults to None (fullscreen).
-#         """
-#         # Initialize Pygame
-#         pygame.init()
-        
-#         # Full screen or set resolution
-#         if screen_resolution:
-#             self.screen = pygame.display.set_mode(screen_resolution)
-#         else:
-#             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        
-#         self.screen_width, self.screen_height = self.screen.get_size()
-#         pygame.display.set_caption("Flickering Boxes")
-        
-#         # Box properties
-#         self.boxes = [
-#             {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[0]}, # Top
-#             {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[1]}, # Bottom
-#             {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[2]}, # Left
-#             {"rect": pygame.Rect(300, 100, 200, 150), "frequency": box_frequencies[3]}, # Right
-#         ]
-        
-#         self.background_color = pygame.Color('black')
-#         self.box_color = pygame.Color('white')
-        
-#         # Start button properties
-#         self.start_button = pygame.Rect(self.screen_width // 2 - 50, self.screen_height // 2 - 25, 100, 50)
-#         self.start_button_color = pygame.Color('green')
-#         self.start_text = pygame.font.Font(None, 36).render('Start', True, pygame.Color('white'))
-#         self.start = False  # Flickering doesn't start until the button is pressed
-
-#     def run(self):
-#         """
-#         Runs the main loop to handle the stimulus presentation.
-#         """
-#         # Main game loop
-#         running = True
-#         while running:
-#             # Event handling
-#             for event in pygame.event.get():
-#                 if event.type == pygame.QUIT:
-#                     running = False
-#                 elif event.type == pygame.KEYDOWN:  # Check for key presses
-#                     if event.key == pygame.K_ESCAPE:  # Exit on Esc
-#                         running = False
-#                 elif event.type == pygame.MOUSEBUTTONDOWN:
-#                     if self.start_button.collidepoint(event.pos):
-#                         self.start = True  # Start flickering when the start button is clicked
-
-#             # Clear screen
-#             self.screen.fill(self.background_color)
-
-#             if not self.start:
-#                 # Draw start button
-#                 pygame.draw.rect(self.screen, self.start_button_color, self.start_button)
-#                 self.screen.blit(self.start_text, (self.start_button.x + 10, self.start_button.y + 10))
-#             else:
-#                 # Current time
-#                 current_time = time.time()
-
-#                 # Calculate positions for diamond pattern near the edges of the screen
-#                 edge_offset = 100  # Distance from the edge of the screen to the box
-#                 # Assuming each box is 150x150 pixels
-#                 box_size = 150
-                
-#                 offset = 300  # Distance from the center to the box's center in the diamond pattern
-
-#                 # Calculate the center of the screen
-#                 centerX, centerY = self.screen_width // 2, self.screen_height // 2
-
-#                 # Adjust positions for the top and bottom boxes to be in the diamond pattern
-#                 # Top box
-#                 self.boxes[0]["rect"].center = (centerX, centerY - offset)  
-#                 # Bottom box
-#                 self.boxes[2]["rect"].center = (centerX, centerY + offset)  
-#                 # Left box
-#                 self.boxes[3]["rect"].center = (edge_offset + box_size // 2, centerY)
-#                 # Right box
-#                 self.boxes[1]["rect"].center = (self.screen_width - edge_offset - box_size // 2, centerY)
-
-#                 # Draw boxes based on their flickering state
-#                 for box in self.boxes:
-#                     if math.sin(current_time * box["frequency"] * math.pi) > 0:
-#                         pygame.draw.rect(self.screen, self.box_color, box["rect"])
-
-#             # Update display
-#             pygame.display.flip()
-
-#             # Control frame rate
-#             pygame.time.wait(10)
-
-#         # Clean up and exit
-#         pygame.quit()
-#         sys.exit()
-
 # # Example usage
-# # if __name__ == "__main__":
-# #     box_frequencies = [8, 10, 12, 14]
-# #     stimulus = SSVEPStimulus(box_frequencies)
-# #     stimulus.run()
+# if __name__ == "__main__":
+#     box_frequencies = [8, 10, 12, 14, 16, 18]  # List of frequencies
+#     box_texts = ["A", "B", "C", "D", "E", "F"]  # List of texts or symbols
+#     stimulus = SSVEPStimulus(box_frequencies, box_texts, show_both=True)
+#     stimulus.run()

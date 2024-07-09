@@ -6,13 +6,15 @@ _EEG Data Processing/Classification_
   - [X] Segment Data
   - [ ] Filter [Brainflow/External?] --> **Need to Test!**
 - [X] Signal Generation (harmonics) --> Vishal's code
+  - [ ] Test stacked/unstacked harmonics performance (speed & accuracy)
 - [ ] Feature Extraction/Classification [CCA]
   - [ ] Feedback/Output Signal [loops into function]
 
 _Signal Elicitation/Presentation Paradigm_
-- [ ] Make SSVEP paradigm [pygame]
+- [X] Make SSVEP paradigm [pygame]
+  - [X] Integrate into program
   - [ ] Test that we can elicit the inteded SSVEP frequencie(s)
-  - [ ] Integrate into program
+
 
 
 
