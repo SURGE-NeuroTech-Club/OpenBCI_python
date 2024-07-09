@@ -1,9 +1,8 @@
 # from modules.stream_data import *
 from modules.preprocessing import *
-from modules.classification import *
 from modules.maintenence import *
 from modules.stream_data import *
-from modules.canonical_corr import *
+from modules.ssvep_handler import *
 from modules.stim_pres import *
 
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds, BrainFlowPresets
@@ -14,7 +13,8 @@ serial_port = 'COM4' #Looks different on MAC/Linux -> "/dev/tty*"
 # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
 board_id = BoardIds.SYNTHETIC_BOARD #BoardIds.CYTON_BOARD
 frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
-buttons = ['1', '2', '3', '4'] # For Display purposes; must be same length as frequencies 
+buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
+button_pos = [0, 2, 3, 1] # Assigns positions to custom text - must be same length as buttons
 segment_duration = 4 # seconds
 
 # Static Variables - Probably don't need to touch :)
@@ -27,14 +27,13 @@ eeg_channels = BoardShim.get_eeg_names(board_id)
 channel_names = ["O1", "O2", "Oz", "Pz", "P3", "P4", "POz", "P1"]
 channel_mapping = dict(zip(eeg_channels, channel_names))
 
-
 # Show board information
 print(f"Sampling Rate: {sampling_rate}")
 print(f"Default Channels: {eeg_channels}")
 print(f"Channel Mapping: {channel_mapping}")
 
 def run_stimulus():
-    stimulus = SSVEPStimulus(frequencies, box_texts=buttons, show_both=True)
+    stimulus = SSVEPStimulus(frequencies, box_texts=buttons, box_text_indices=button_pos, show_both=True)
     stimulus.run()
 
 if __name__ == "__main__":     
@@ -86,6 +85,7 @@ if __name__ == "__main__":
                 detected_freq, correlation = classifier.cca_analysis(filtered_segment)
                     # Stacked Harmonics (testing)
                 detected_freq_stacked, correlation_stacked = classifier_stacked.cca_analysis(filtered_segment)
+                
                 print(f"Detected frequency: {detected_freq} Hz with correlation: {correlation}")
 
                 # Optionally save or process the data further

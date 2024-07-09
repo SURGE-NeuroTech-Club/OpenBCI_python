@@ -9,6 +9,7 @@ _EEG Data Processing/Classification_
   - [ ] Test stacked/unstacked harmonics performance (speed & accuracy)
 - [ ] Feature Extraction/Classification [CCA]
   - [ ] Feedback/Output Signal [loops into function]
+- [ ] Adjust to use Tensors for processing steps?
 
 _Signal Elicitation/Presentation Paradigm_
 - [X] Make SSVEP paradigm [pygame]

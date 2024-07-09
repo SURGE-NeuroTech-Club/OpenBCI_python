@@ -20,18 +20,19 @@ class SSVEPStimulus:
         start (bool): Flag to start the flickering boxes.
     """
 
-    def __init__(self, box_frequencies, box_texts=None, show_both=False, screen_resolution=None):
+    def __init__(self, box_frequencies, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None):
         """
         Initializes the SSVEPStimulus class.
         
         Args:
             box_frequencies (list): List of flickering frequencies for the boxes.
             box_texts (list, optional): List of texts or symbols to display on the boxes. Defaults to None.
+            box_text_indices (list, optional): List of indices specifying which boxes display the texts. Defaults to None.
             show_both (bool, optional): Flag to show both box_text and frequency. Defaults to False.
             screen_resolution (tuple, optional): Screen resolution (width, height). Defaults to None (fullscreen).
         """
-        if box_texts and len(box_frequencies) != len(box_texts):
-            raise ValueError("The length of box_frequencies and box_texts must be the same if box_texts is provided.")
+        if box_texts and len(box_texts) != len(box_text_indices):
+            raise ValueError("The length of box_texts and box_text_indices must be the same if box_texts is provided.")
         
         pygame.init()
         
@@ -58,7 +59,11 @@ class SSVEPStimulus:
             left += 1
             right -= 1
 
-        self.boxes = [{"rect": pygame.Rect(0, 0, 150, 150), "frequency": box_frequencies[i], "text": box_texts[i] if box_texts else None} for i in interleaved_indices]
+        self.boxes = [{"rect": pygame.Rect(0, 0, 150, 150), "frequency": box_frequencies[i], "text": None} for i in interleaved_indices]
+        
+        if box_texts and box_text_indices:
+            for text, idx in zip(box_texts, box_text_indices):
+                self.boxes[idx]["text"] = text
         
         self.background_color = pygame.Color('black')
         self.box_color = pygame.Color('white')
@@ -126,9 +131,10 @@ class SSVEPStimulus:
         pygame.quit()
         sys.exit()
 
-# # Example usage
+## Example usage
 # if __name__ == "__main__":
-#     box_frequencies = [8, 10, 12, 14, 16, 18]  # List of frequencies
-#     box_texts = ["A", "B", "C", "D", "E", "F"]  # List of texts or symbols
-#     stimulus = SSVEPStimulus(box_frequencies, box_texts, show_both=True)
+#     box_frequencies = [8, 10, 12, 14]  # List of frequencies
+#     box_texts = ["A", "B", "C", "D"]  # List of texts or symbols
+#     box_text_indices = [0, 1, 2, 3]  # Indices where the texts should be displayed
+#     stimulus = SSVEPStimulus(box_frequencies, box_texts, box_text_indices, show_both=True)
 #     stimulus.run()
