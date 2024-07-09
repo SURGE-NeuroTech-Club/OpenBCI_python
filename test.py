@@ -1,140 +1,261 @@
-import pygame
-import sys
-import math
-import time
+import numpy as np
+from mvlearn.embed import CCA
+from scipy.signal import welch
+import matplotlib.pyplot as plt
+import matplotlib
 
-class SSVEPStimulus:
+matplotlib.use('Agg')  # Use a non-GUI backend
+
+class SSVEP_SNR:
     """
-    Class to handle the stimulus presentation paradigm for an SSVEP BCI system using flickering boxes.
-    
+    A class to calculate and plot Signal-to-Noise Ratio (SNR) for SSVEP signals.
+
     Attributes:
-        boxes (list): A list of dictionaries containing box properties (position, flickering frequency, and text/symbol).
-        screen (pygame.Surface): The Pygame screen surface.
-        screen_width (int): The width of the screen.
-        screen_height (int): The height of the screen.
-        background_color (pygame.Color): The background color of the screen.
-        box_color (pygame.Color): The color of the boxes.
-        start_button (pygame.Rect): The start button rectangle.
-        start_button_color (pygame.Color): The color of the start button.
-        start_text (pygame.Surface): The text surface for the start button.
-        start (bool): Flag to start the flickering boxes.
+        signal (np.ndarray): The input EEG signal.
+        fs (float): The sampling frequency of the signal.
+        noise_bandwidth (float): The bandwidth around each frequency considered as noise.
     """
 
-    def __init__(self, box_frequencies, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None):
+    def __init__(self, signal, fs, noise_bandwidth=1):
         """
-        Initializes the SSVEPStimulus class.
-        
+        Initializes the SSVEP_SNR class with the given parameters.
+
         Args:
-            box_frequencies (list): List of flickering frequencies for the boxes.
-            box_texts (list, optional): List of texts or symbols to display on the boxes. Defaults to None.
-            box_text_indices (list, optional): List of indices specifying which boxes display the texts. Defaults to None.
-            show_both (bool, optional): Flag to show both box_text and frequency. Defaults to False.
-            screen_resolution (tuple, optional): Screen resolution (width, height). Defaults to None (fullscreen).
+            signal (np.ndarray): The input EEG signal.
+            fs (float): The sampling frequency of the signal.
+            noise_bandwidth (float): The bandwidth around each frequency considered as noise.
         """
-        if box_texts and len(box_texts) != len(box_text_indices):
-            raise ValueError("The length of box_texts and box_text_indices must be the same if box_texts is provided.")
-        
-        pygame.init()
-        
-        if screen_resolution:
-            self.screen = pygame.display.set_mode(screen_resolution)
-        else:
-            self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        
-        self.screen_width, self.screen_height = self.screen.get_size()
-        pygame.display.set_caption("Flickering Boxes")
-        
-        sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
-        interleaved_indices = []
+        self.signal = signal
+        self.fs = fs
+        self.noise_bandwidth = noise_bandwidth
 
-        # Interleave frequencies to maximize distance between similar frequencies
-        left = 0
-        right = len(sorted_indices) - 1
-        while left <= right:
-            if left == right:
-                interleaved_indices.append(sorted_indices[left])
+    def calculate_psd(self):
+        """
+        Calculates the Power Spectral Density (PSD) of the signal.
+
+        Returns:
+            tuple: Arrays of frequencies and corresponding PSD values.
+        """
+        freqs, psd = welch(self.signal, self.fs, nperseg=1024)
+        return freqs, psd
+
+    def calculate_snr(self):
+        """
+        Calculates the Signal-to-Noise Ratio (SNR) of the signal for all frequencies.
+
+        Returns:
+            tuple: Arrays of frequencies and corresponding SNR values.
+        """
+        freqs, psd = self.calculate_psd()
+        snr = np.zeros_like(psd)
+
+        for i in range(len(freqs)):
+            noise_range = np.logical_and(freqs >= freqs[i] - self.noise_bandwidth, freqs <= freqs[i] + self.noise_bandwidth)
+            noise_range[i] = False  # Exclude the signal frequency itself
+            signal_power = psd[i]
+            noise_power = np.mean(psd[noise_range])
+            snr[i] = 10 * np.log10(signal_power / noise_power)
+        
+        return freqs, snr
+
+    def plot_snr(self, filename='snr_plot.png', fmin=1.0, fmax=50.0):
+        """
+        Plots the PSD and SNR of the signal and saves the plot to a file.
+
+        Args:
+            filename (str): The name of the file to save the plot.
+            fmin (float): The minimum frequency for the plot.
+            fmax (float): The maximum frequency for the plot.
+        """
+        freqs, psd = self.calculate_psd()
+        freqs, snr = self.calculate_snr()
+
+        freq_range = range(
+            np.where(np.floor(freqs) == fmin)[0][0], np.where(np.ceil(freqs) == fmax)[0][0]
+        )
+        
+        psd_db = 10 * np.log10(psd)
+        
+        fig, axes = plt.subplots(2, 1, sharex="all", sharey="none", figsize=(8, 5))
+
+        # Plot PSD
+        axes[0].plot(freqs[freq_range], psd_db[freq_range], color="b")
+        axes[0].fill_between(
+            freqs[freq_range], psd_db[freq_range], color="b", alpha=0.2
+        )
+        axes[0].set(title="PSD Spectrum", ylabel="Power Spectral Density [dB]")
+
+        # Plot SNR
+        axes[1].plot(freqs[freq_range], snr[freq_range], color="r")
+        axes[1].fill_between(
+            freqs[freq_range], snr[freq_range], color="r", alpha=0.2
+        )
+        axes[1].set(
+            title="SNR Spectrum",
+            xlabel="Frequency [Hz]",
+            ylabel="SNR [dB]",
+            ylim=[-2, 30],
+            xlim=[fmin, fmax],
+        )
+
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
+
+
+class ClassifySSVEP:
+    """
+    A class to generate reference signals and perform Canonical Correlation Analysis (CCA) for SSVEP classification.
+
+    Attributes:
+        frequencies (list): List of target frequencies.
+        harmonics (list): List of harmonics to generate for each frequency.
+        sampling_rate (float): The sampling rate of the EEG data.
+        n_samples (int): The number of samples in the time window for analysis.
+        stack_harmonics (bool): Whether to stack harmonics for reference signals.
+        reference_signals (dict): Dictionary of reference signals for each frequency.
+    """
+
+    def __init__(self, frequencies, harmonics, sampling_rate, n_samples, stack_harmonics=True):
+        """
+        Initializes the ClassifySSVEP class with the given parameters.
+
+        Args:
+            frequencies (list): List of target frequencies.
+            harmonics (list): List of harmonics to generate for each frequency.
+            sampling_rate (float): The sampling rate of the EEG data.
+            n_samples (int): The number of samples in the time window for analysis.
+            stack_harmonics (bool): Whether to stack harmonics for reference signals.
+        """
+        self.frequencies = frequencies
+        self.harmonics = harmonics
+        self.sampling_rate = sampling_rate
+        self.n_samples = n_samples
+        self.stack_harmonics = stack_harmonics
+        self.reference_signals = self._generate_reference_signals()
+
+    def _generate_reference_signals(self):
+        """
+        Generates reference signals (sine and cosine waves) for each target frequency and its harmonics.
+
+        Returns:
+            dict: A dictionary containing the generated reference signals for each frequency.
+        """
+        reference_signals = {}
+        time = np.linspace(0, self.n_samples / self.sampling_rate, self.n_samples, endpoint=False)
+        for freq in self.frequencies:
+            signals = []
+            for harmon in self.harmonics:
+                sine_wave = np.sin(2 * np.pi * harmon * freq * time)
+                cosine_wave = np.cos(2 * np.pi * harmon * freq * time)
+                signals.append(sine_wave)
+                signals.append(cosine_wave)
+            if self.stack_harmonics:
+                reference_signals[freq] = np.vstack(signals).T
             else:
-                interleaved_indices.append(sorted_indices[left])
-                interleaved_indices.append(sorted_indices[right])
-            left += 1
-            right -= 1
+                reference_signals[freq] = np.array(signals)
+        return reference_signals
 
-        self.boxes = [{"rect": pygame.Rect(0, 0, 150, 150), "frequency": box_frequencies[i], "text": None} for i in interleaved_indices]
-        
-        if box_texts and box_text_indices:
-            for text, idx in zip(box_texts, box_text_indices):
-                self.boxes[idx]["text"] = text
-        
-        self.background_color = pygame.Color('black')
-        self.box_color = pygame.Color('white')
-        
-        self.start_button = pygame.Rect(self.screen_width // 2 - 50, self.screen_height // 2 - 25, 100, 50)
-        self.start_button_color = pygame.Color('green')
-        self.start_text = pygame.font.Font(None, 36).render('Start', True, pygame.Color('white'))
-        self.start = False
-        
-        self.font = pygame.font.Font(None, 36)  # Font for displaying frequencies and texts/symbols
-        self.show_both = show_both  # Flag to show both text and frequency
-
-    def run(self):
+    def get_reference_signals(self, frequency):
         """
-        Runs the main loop to handle the stimulus presentation.
+        Retrieves the reference signals for a given frequency.
+
+        Args:
+            frequency (float): The target frequency.
+
+        Returns:
+            np.ndarray: The reference signals for the given frequency.
         """
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.start_button.collidepoint(event.pos):
-                        self.start = True
+        return self.reference_signals.get(frequency, None)
 
-            self.screen.fill(self.background_color)
+    def cca_analysis(self, eeg_data):
+        """
+        Performs Canonical Correlation Analysis (CCA) to identify the target frequency the user is focusing on.
 
-            if not self.start:
-                pygame.draw.rect(self.screen, self.start_button_color, self.start_button)
-                self.screen.blit(self.start_text, (self.start_button.x + 10, self.start_button.y + 10))
+        Args:
+            eeg_data (np.ndarray): The EEG data to be analyzed.
+        
+        Returns:
+            tuple: The detected frequency and the corresponding correlation value.
+        """
+        cca = CCA(n_components=1)
+        max_corr = 0
+        target_freq = None
+
+        for freq, ref in self.reference_signals.items():
+            if self.stack_harmonics:
+                if eeg_data.shape[1] != ref.shape[0]:
+                    raise ValueError("EEG data and reference signals must have the same number of samples")
+                cca.fit([eeg_data.T, ref])
+                U, V = cca.transform([eeg_data.T, ref])
             else:
-                current_time = time.time()
-                
-                centerX, centerY = self.screen_width // 2, self.screen_height // 2
-                radius = min(self.screen_width, self.screen_height) // 3
-                num_boxes = len(self.boxes)
-                
-                for i, box in enumerate(self.boxes):
-                    angle = 2 * math.pi * i / num_boxes
-                    box["rect"].center = (centerX + int(radius * math.cos(angle)), centerY + int(radius * math.sin(angle)))
-                    
-                    if math.sin(current_time * box["frequency"] * math.pi) > 0:
-                        pygame.draw.rect(self.screen, self.box_color, box["rect"])
-                        if self.show_both and box["text"]:
-                            # Display both text and frequency
-                            text_surface = self.font.render(box["text"], True, pygame.Color('black'))
-                            text_rect = text_surface.get_rect(center=(box["rect"].centerx, box["rect"].centery - 10))
-                            self.screen.blit(text_surface, text_rect)
-                            
-                            frequency_text = self.font.render(f"{box['frequency']} Hz", True, pygame.Color('black'))
-                            frequency_rect = frequency_text.get_rect(center=(box["rect"].centerx, box["rect"].centery + 20))
-                            self.screen.blit(frequency_text, frequency_rect)
-                        else:
-                            display_text = box["text"] if box["text"] else f"{box['frequency']} Hz"
-                            text_surface = self.font.render(display_text, True, pygame.Color('black'))
-                            text_rect = text_surface.get_rect(center=box["rect"].center)
-                            self.screen.blit(text_surface, text_rect)
+                U, V = None, None
+                if eeg_data.shape[1] != ref.shape[1]:
+                    raise ValueError("EEG data and reference signals must have the same number of samples")
+                for i in range(ref.shape[0] // 2):
+                    cca.fit([eeg_data.T, ref[2*i:2*i+2, :].T])
+                    U_tmp, V_tmp = cca.transform([eeg_data.T, ref[2*i:2*i+2, :].T])
+                    if U is None:
+                        U, V = U_tmp, V_tmp
+                    else:
+                        U = np.hstack((U, U_tmp))
+                        V = np.hstack((V, V_tmp))
+            corr = np.corrcoef(U[:, 0], V[:, 0])[0, 1]
+            if corr > max_corr:
+                max_corr = corr
+                target_freq = freq
+        return target_freq, max_corr
 
-            pygame.display.flip()
-            pygame.time.wait(10)
+    def check_snr(self, eeg_data):
+        """
+        Calculates the SNR for each target frequency.
 
-        pygame.quit()
-        sys.exit()
+        Args:
+            eeg_data (np.ndarray): The EEG data to be analyzed.
+
+        Returns:
+            dict: SNR values for each target frequency.
+        """
+        signal = eeg_data.flatten()  # Assuming eeg_data is 2D: (n_channels, n_samples)
+        snr_calculator = SSVEP_SNR(signal, self.sampling_rate)
+        freqs, snr_values = snr_calculator.calculate_snr()
+        
+        snr_results = {}
+        for freq in self.frequencies:
+            target_idx = np.argmin(np.abs(freqs - freq))
+            snr_results[freq] = snr_values[target_idx]
+        
+        return snr_results
 
 ## Example usage
-# if __name__ == "__main__":
-#     box_frequencies = [8, 10, 12, 14]  # List of frequencies
-#     box_texts = ["A", "B", "C", "D"]  # List of texts or symbols
-#     box_text_indices = [0, 1, 2, 3]  # Indices where the texts should be displayed
-#     stimulus = SSVEPStimulus(box_frequencies, box_texts, box_text_indices, show_both=True)
-#     stimulus.run()
+if __name__ == "__main__":
+    frequencies = [9.25, 11.25, 13.25]
+    harmonics = np.arange(1, 4)
+    sampling_rate = 256
+    n_samples = 1025
+
+    # Initialize with stacking harmonics
+    ssvep_harmonics_stacked = ClassifySSVEP(frequencies, harmonics, sampling_rate, n_samples, stack_harmonics=True)
+
+    # Initialize without stacking harmonics
+    ssvep_harmonics_not_stacked = ClassifySSVEP(frequencies, harmonics, sampling_rate, n_samples, stack_harmonics=False)
+
+    # Example EEG data (randomly generated for illustration purposes, shape: n_channels, n_samples)
+    eeg_data = np.random.randn(6, n_samples)  # Assuming 6 channels and 1025 samples
+
+    # Perform CCA analysis with stacked harmonics
+    detected_freq_stacked, correlation_stacked = ssvep_harmonics_stacked.cca_analysis(eeg_data)
+    print(f"Detected frequency with stacked harmonics: {detected_freq_stacked} Hz with correlation: {correlation_stacked}")
+
+    # Perform CCA analysis without stacking harmonics
+    detected_freq_not_stacked, correlation_not_stacked = ssvep_harmonics_not_stacked.cca_analysis(eeg_data)
+    print(f"Detected frequency without stacked harmonics: {detected_freq_not_stacked} Hz with correlation: {correlation_not_stacked}")
+    
+    # Check SNR and plot
+    snr_calculator = SSVEP_SNR(eeg_data.flatten(), sampling_rate)
+    snr_calculator.plot_snr('snr_plot.png', fmin=1.0, fmax=50.0)  # Save the plot as snr_plot.png
+    
+    # Check SNR for each target frequency
+    snr_results = ssvep_harmonics_stacked.check_snr(eeg_data)
+    for freq, snr in snr_results.items():
+        print(f"Frequency: {freq} Hz, SNR: {snr:.2f} dB")
