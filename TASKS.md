@@ -16,7 +16,11 @@ _Signal Elicitation/Presentation Paradigm_
   - [X] Integrate into program
   - [ ] Test that we can elicit the inteded SSVEP frequencie(s)
 
-
+Notes:
+**Cyton Board**:
+- 1-8 = EEG
+- 9-11 = Accelerometer Channels
+- 13 Aux Channel
 
 
 For SSVEP: Oz, O1, O2, pOz, PO3, PO4, Pz (+ reference?)

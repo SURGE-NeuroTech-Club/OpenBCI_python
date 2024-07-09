@@ -1,4 +1,3 @@
-# from modules.stream_data import *
 from modules.preprocessing import *
 from modules.maintenence import *
 from modules.stream_data import *
@@ -9,14 +8,13 @@ from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds, Brai
 from pynput import keyboard
 
 ## Adjust As Necessary
-serial_port = 'COM4' #Looks different on MAC/Linux -> "/dev/tty*"
-# Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
-board_id = BoardIds.SYNTHETIC_BOARD #BoardIds.CYTON_BOARD
+serial_port = 'COM5' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
+board_id = BoardIds.CYTON_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
 frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
 buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
 button_pos = [0, 2, 3, 1] # Assigns positions to custom text - must be same length as buttons
 segment_duration = 4 # seconds
-display = 0 # Which screen to display the stimulus paradigm on --> 0 is default
+display = 1 # Which screen to display the stimulus paradigm on --> 0 is default
 
 # Static Variables - Probably don't need to touch :)
 harmonics = np.arange(1, 4) # Generates the 1st, 2nd, & 3rd Harmonics
@@ -76,9 +74,12 @@ if __name__ == "__main__":
             if segment is not None:
                 
                 # print(f"Segment shape: {segment.shape}")
-                
+
+                # Only the first 8 channels are EEG data, so we slice out the remaining channels (9-24)    
+                eeg_segment = segment[:8, :]
+
                 # Step 2: Filter the data
-                filtered_segment = segmenter.filter_data(segment)
+                filtered_segment = segmenter.filter_data(eeg_segment)
                 print("Filtered data shape:", filtered_segment.shape)
 
                 # Step 3: Use CCA to match the EEG & Reference (harmonic) signals
