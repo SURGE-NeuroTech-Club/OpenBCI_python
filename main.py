@@ -8,8 +8,9 @@ from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds, Brai
 from pynput import keyboard
 
 ## Adjust As Necessary
-serial_port = 'COM7' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
-board_id = BoardIds.CYTON_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
+# serial_port = 'COM7' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
+params = BrainFlowInputParams()
+board_id = BoardIds.UNICORN_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
 frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
 # buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
 button_pos = [0, 2, 3, 1] # Assigns positions to custom text - must be same length as buttons
@@ -42,7 +43,7 @@ def main():
     key_listener.run_listener()
 
     ## Initializing Board  
-    board = BrainFlowBoardSetup(board_id, serial_port)
+    board = BoardShim(BoardIds.UNICORN_BOARD, params)
     # board.show_params() # Logger shows this info by default - this is another method to show
     board.setup()
     
