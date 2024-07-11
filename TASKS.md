@@ -7,8 +7,11 @@ _EEG Data Processing/Classification_
   - [ ] Filter [Brainflow/External?] --> **Need to Test!**
 - [X] Signal Generation (harmonics) --> Vishal's code
   - [ ] Test stacked/unstacked harmonics performance (speed & accuracy)
-- [ ] Feature Extraction/Classification [CCA]
+    - After offline (sim data testing) it seems there is little/no difference in either
+- [X] Feature Extraction/Classification [CCA]
   - [ ] Feedback/Output Signal [loops into function]
+
+
 - [ ] Adjust to use Tensors for processing steps?
 
 _Signal Elicitation/Presentation Paradigm_
@@ -17,10 +20,10 @@ _Signal Elicitation/Presentation Paradigm_
   - [ ] Test that we can elicit the inteded SSVEP frequencie(s)
 
 Notes:
-**Cyton Board**:
+**Cyton Board**: streams data in 24 channels
 - 1-8 = EEG
 - 9-11 = Accelerometer Channels
-- 13 Aux Channel
+- 13+ Aux Channels(?)
 
 
 For SSVEP: Oz, O1, O2, pOz, PO3, PO4, Pz (+ reference?)
@@ -35,20 +38,11 @@ Flow:
 Cyton Board > LSL > Neuropype > LSL > Python
 Cyton Board > Brainflow > Python
 
-- Get data streaming to script (via LSL/Brainflow)
-- Preprocessing steps:
-  - Filter
-  - Segmentation
-  - FFT(?)
-- Classification:
-  - CCA(?)
-
-
-
 
 ## CCA/SSVEP Python Libraries: (other than scikit-learn)
 - https://github.com/jameschapman19/cca_zoo
 - https://github.com/nbara/python-meegkit
 - https://wiki.mentalab.com/applications/ssvep/
+- MNE-LSL: https://mne.tools/mne-lsl/stable/api/index.html
 
 - https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0140703&type=printable
