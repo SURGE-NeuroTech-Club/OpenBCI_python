@@ -9,15 +9,14 @@ _EEG Data Processing/Classification_
   - [ ] Test stacked/unstacked harmonics performance (speed & accuracy)
     - After offline (sim data testing) it seems there is little/no difference in either
 - [X] Feature Extraction/Classification [CCA]
-  - [ ] Feedback/Output Signal [loops into function]
-
+  - [ ] Feedback/Output Signal --> do something with the output (also handle exceptions?)
 
 - [ ] Adjust to use Tensors for processing steps?
 
 _Signal Elicitation/Presentation Paradigm_
 - [X] Make SSVEP paradigm [pygame]
   - [X] Integrate into program
-  - [ ] Test that we can elicit the inteded SSVEP frequencie(s)
+  - [x] Test that we can elicit the inteded SSVEP frequencie(s)
 
 Notes:
 **Cyton Board**: streams data in 24 channels

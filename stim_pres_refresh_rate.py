@@ -2,7 +2,6 @@ import pygame
 import sys
 import math
 import os
-import time
 
 class SSVEPStimulus:
     """
@@ -37,8 +36,7 @@ class SSVEPStimulus:
         pygame.display.set_caption("Flickering Boxes")
 
         self.clock = pygame.time.Clock()
-        self.refresh_rate = self.estimate_refresh_rate()
-        print(f"Estimated refresh rate: {self.refresh_rate:.2f} Hz")
+        self.refresh_rate = self.clock.get_fps() if self.clock.get_fps() else 60  # Assume 60 if cannot be determined
 
         sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
         interleaved_indices = []
@@ -71,22 +69,6 @@ class SSVEPStimulus:
         
         self.font = pygame.font.Font(None, 36)
         self.show_both = show_both
-
-    def estimate_refresh_rate(self):
-        """
-        Estimate the refresh rate of the display by measuring the time to render a fixed number of frames.
-        """
-        num_frames = 200
-        frame_times = []
-
-        for _ in range(num_frames):
-            start_time = time.perf_counter()
-            self.clock.tick()
-            end_time = time.perf_counter()
-            frame_times.append(end_time - start_time)
-
-        avg_frame_time = sum(frame_times) / len(frame_times)
-        return 1 / avg_frame_time if avg_frame_time > 0 else 60
 
     def run(self):
         """
@@ -135,10 +117,6 @@ class SSVEPStimulus:
                             text_surface = self.font.render(display_text, True, pygame.Color('black'))
                             text_rect = text_surface.get_rect(center=box["rect"].center)
                             self.screen.blit(text_surface, text_rect)
-
-            # Display the estimated refresh rate on the screen
-            refresh_rate_text = self.font.render(f"Refresh Rate: {self.refresh_rate:.2f} Hz", True, pygame.Color('white'))
-            self.screen.blit(refresh_rate_text, (10, 10))
 
             pygame.display.flip()
             self.clock.tick(self.refresh_rate)

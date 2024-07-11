@@ -8,16 +8,16 @@ from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds, Brai
 from pynput import keyboard
 
 ## Adjust As Necessary
-serial_port = 'COM5' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
+serial_port = 'COM7' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
 board_id = BoardIds.CYTON_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
 frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
-buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
+# buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
 button_pos = [0, 2, 3, 1] # Assigns positions to custom text - must be same length as buttons
-segment_duration = 4 # seconds
+segment_duration = 5 # seconds
 display = 1 # Which screen to display the stimulus paradigm on --> 0 is default
 
 # Static Variables - Probably don't need to touch :)
-harmonics = np.arange(1, 4) # Generates the 1st, 2nd, & 3rd Harmonics
+harmonics = np.arange(1, 6) # Generates the 1st, 2nd, & 3rd Harmonics
 sampling_rate = BoardShim.get_sampling_rate(board_id)
 n_samples = sampling_rate * segment_duration 
 
@@ -32,7 +32,7 @@ print(f"Default Channels: {eeg_channels}")
 print(f"Channel Mapping: {channel_mapping}")
 
 def run_stimulus():
-    stimulus = SSVEPStimulus(frequencies, box_texts=buttons, box_text_indices=button_pos, show_both=True, display_index=display)
+    stimulus = SSVEPStimulus(frequencies, box_text_indices=button_pos, show_both=True, display_index=display) # box_texts=buttons,
     stimulus.run()
 
 def main():

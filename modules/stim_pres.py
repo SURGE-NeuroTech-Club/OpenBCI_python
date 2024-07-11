@@ -1,37 +1,16 @@
 import pygame
 import sys
 import math
-import time
 import os
 
 class SSVEPStimulus:
     """
     Class to handle the stimulus presentation paradigm for an SSVEP BCI system using flickering boxes.
-    
-    Attributes:
-        boxes (list): A list of dictionaries containing box properties (position, flickering frequency, and text/symbol).
-        screen (pygame.Surface): The Pygame screen surface.
-        screen_width (int): The width of the screen.
-        screen_height (int): The height of the screen.
-        background_color (pygame.Color): The background color of the screen.
-        box_color (pygame.Color): The color of the boxes.
-        start_button (pygame.Rect): The start button rectangle.
-        start_button_color (pygame.Color): The color of the start button.
-        start_text (pygame.Surface): The text surface for the start button.
-        start (bool): Flag to start the flickering boxes.
     """
-
+    
     def __init__(self, box_frequencies, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None, display_index=0):
         """
         Initializes the SSVEPStimulus class.
-        
-        Args:
-            box_frequencies (list): List of flickering frequencies for the boxes.
-            box_texts (list, optional): List of texts or symbols to display on the boxes. Defaults to None.
-            box_text_indices (list, optional): List of indices specifying which boxes display the texts. Defaults to None.
-            show_both (bool, optional): Flag to show both box_text and frequency. Defaults to False.
-            screen_resolution (tuple, optional): Screen resolution (width, height). Defaults to None (fullscreen).
-            display_index (int, optional): Index of the display to use. Defaults to 0 (primary display).
         """
         if box_texts and len(box_texts) != len(box_text_indices):
             raise ValueError("The length of box_texts and box_text_indices must be the same if box_texts is provided.")
@@ -55,7 +34,10 @@ class SSVEPStimulus:
 
         self.screen_width, self.screen_height = self.screen.get_size()
         pygame.display.set_caption("Flickering Boxes")
-        
+
+        self.clock = pygame.time.Clock()
+        self.refresh_rate = self.clock.get_fps() if self.clock.get_fps() else 60  # Assume 60 if cannot be determined
+
         sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
         interleaved_indices = []
 
@@ -71,7 +53,7 @@ class SSVEPStimulus:
             left += 1
             right -= 1
 
-        self.boxes = [{"rect": pygame.Rect(0, 0, 150, 150), "frequency": box_frequencies[i], "text": None} for i in interleaved_indices]
+        self.boxes = [{"rect": pygame.Rect(0, 0, 150, 150), "frequency": box_frequencies[i], "text": None, "frame_count": 0} for i in interleaved_indices]
         
         if box_texts and box_text_indices:
             for text, idx in zip(box_texts, box_text_indices):
@@ -85,8 +67,8 @@ class SSVEPStimulus:
         self.start_text = pygame.font.Font(None, 36).render('Start', True, pygame.Color('white'))
         self.start = False
         
-        self.font = pygame.font.Font(None, 36)  # Font for displaying frequencies and texts/symbols
-        self.show_both = show_both  # Flag to show both text and frequency
+        self.font = pygame.font.Font(None, 36)
+        self.show_both = show_both
 
     def run(self):
         """
@@ -110,8 +92,6 @@ class SSVEPStimulus:
                 pygame.draw.rect(self.screen, self.start_button_color, self.start_button)
                 self.screen.blit(self.start_text, (self.start_button.x + 10, self.start_button.y + 10))
             else:
-                current_time = time.time()
-                
                 centerX, centerY = self.screen_width // 2, self.screen_height // 2
                 radius = min(self.screen_width, self.screen_height) // 3
                 num_boxes = len(self.boxes)
@@ -120,10 +100,11 @@ class SSVEPStimulus:
                     angle = 2 * math.pi * i / num_boxes
                     box["rect"].center = (centerX + int(radius * math.cos(angle)), centerY + int(radius * math.sin(angle)))
                     
-                    if math.sin(current_time * box["frequency"] * math.pi) > 0:
+                    box["frame_count"] += 1
+                    flicker_period = self.refresh_rate / box["frequency"]
+                    if (box["frame_count"] % flicker_period) < (flicker_period / 2):
                         pygame.draw.rect(self.screen, self.box_color, box["rect"])
                         if self.show_both and box["text"]:
-                            # Display both text and frequency
                             text_surface = self.font.render(box["text"], True, pygame.Color('black'))
                             text_rect = text_surface.get_rect(center=(box["rect"].centerx, box["rect"].centery - 10))
                             self.screen.blit(text_surface, text_rect)
@@ -138,38 +119,25 @@ class SSVEPStimulus:
                             self.screen.blit(text_surface, text_rect)
 
             pygame.display.flip()
-            pygame.time.wait(10)
+            self.clock.tick(self.refresh_rate)
 
         pygame.quit()
         sys.exit()
 
-# Example usage with box positions
+# Example usage
 if __name__ == "__main__":
     box_frequencies = [8, 10, 12, 14, 16, 18]  # List of frequencies
     box_texts = ["A", "B", "C"]  # List of texts or symbols
     box_text_indices = [0, 2, 4]  # Indices where the texts should be displayed
 
     stimulus = SSVEPStimulus(box_frequencies, box_texts, box_text_indices, show_both=True, display_index=0)
-
-    # Print the positions and texts
-    centerX, centerY = stimulus.screen_width // 2, stimulus.screen_height // 2
-    radius = min(stimulus.screen_width, stimulus.screen_height) // 3
-    num_boxes = len(stimulus.boxes)
-    
-    print("Box Positions and Texts:")
-    for i, box in enumerate(stimulus.boxes):
-        angle = 2 * math.pi * i / num_boxes
-        position = (centerX + int(radius * math.cos(angle)), centerY + int(radius * math.sin(angle)))
-        text = box["text"] if box["text"] else f"{box['frequency']} Hz"
-        print(f"Box {i}: Position {position}, Text: {text}")
-
     stimulus.run()
-
 
 # import pygame
 # import sys
 # import math
 # import time
+# import os
 
 # class SSVEPStimulus:
 #     """
@@ -188,7 +156,7 @@ if __name__ == "__main__":
 #         start (bool): Flag to start the flickering boxes.
 #     """
 
-#     def __init__(self, box_frequencies, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None):
+#     def __init__(self, box_frequencies, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None, display_index=0):
 #         """
 #         Initializes the SSVEPStimulus class.
         
@@ -198,17 +166,28 @@ if __name__ == "__main__":
 #             box_text_indices (list, optional): List of indices specifying which boxes display the texts. Defaults to None.
 #             show_both (bool, optional): Flag to show both box_text and frequency. Defaults to False.
 #             screen_resolution (tuple, optional): Screen resolution (width, height). Defaults to None (fullscreen).
+#             display_index (int, optional): Index of the display to use. Defaults to 0 (primary display).
 #         """
 #         if box_texts and len(box_texts) != len(box_text_indices):
 #             raise ValueError("The length of box_texts and box_text_indices must be the same if box_texts is provided.")
-        
+
 #         pygame.init()
+
+#         # Get the list of available displays
+#         num_displays = pygame.display.get_num_displays()
+#         if display_index >= num_displays:
+#             raise ValueError(f"Display index {display_index} is out of range. There are only {num_displays} displays available.")
         
+#         desktop_sizes = pygame.display.get_desktop_sizes()
+#         selected_display_size = desktop_sizes[display_index]
+
 #         if screen_resolution:
 #             self.screen = pygame.display.set_mode(screen_resolution)
 #         else:
-#             self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        
+#             # Set the position of the window to the selected display
+#             os.environ['SDL_VIDEO_WINDOW_POS'] = f"{selected_display_size[0]},0"
+#             self.screen = pygame.display.set_mode(selected_display_size, pygame.FULLSCREEN)
+
 #         self.screen_width, self.screen_height = self.screen.get_size()
 #         pygame.display.set_caption("Flickering Boxes")
         
@@ -299,10 +278,24 @@ if __name__ == "__main__":
 #         pygame.quit()
 #         sys.exit()
 
-## Example usage
+# # Example usage with box positions
 # if __name__ == "__main__":
-#     box_frequencies = [8, 10, 12, 14]  # List of frequencies
-#     box_texts = ["A", "B", "C", "D"]  # List of texts or symbols
-#     box_text_indices = [0, 1, 2, 3]  # Indices where the texts should be displayed
-#     stimulus = SSVEPStimulus(box_frequencies, box_texts, box_text_indices, show_both=True)
+#     box_frequencies = [8, 10, 12, 14, 16, 18]  # List of frequencies
+#     box_texts = ["A", "B", "C"]  # List of texts or symbols
+#     box_text_indices = [0, 2, 4]  # Indices where the texts should be displayed
+
+#     stimulus = SSVEPStimulus(box_frequencies, box_texts, box_text_indices, show_both=True, display_index=0)
+
+#     # Print the positions and texts
+#     centerX, centerY = stimulus.screen_width // 2, stimulus.screen_height // 2
+#     radius = min(stimulus.screen_width, stimulus.screen_height) // 3
+#     num_boxes = len(stimulus.boxes)
+    
+#     print("Box Positions and Texts:")
+#     for i, box in enumerate(stimulus.boxes):
+#         angle = 2 * math.pi * i / num_boxes
+#         position = (centerX + int(radius * math.cos(angle)), centerY + int(radius * math.sin(angle)))
+#         text = box["text"] if box["text"] else f"{box['frequency']} Hz"
+#         print(f"Box {i}: Position {position}, Text: {text}")
+
 #     stimulus.run()

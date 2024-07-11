@@ -7,7 +7,7 @@ This repository holds code for using the brainflow library with an OpenBCI Cyton
 *Modules/*: Each file should contain documentation on classes & functions
 - `stream_data.py`: A custom class that uses the brainflow library to connect and stream from the Cyton Board
 - `preprocessing.py`: Class that contains functions to segment, filter, and save data
-- `canonical_corr.py`: Class that generates harmonics and uses canonical correlation analysis (CCA) to classify SSVEP data
+- `ssvep_handler.py`: Classes that generate harmonics and uses canonical correlation analysis (CCA) to classify SSVEP data, and functions that perform and return signal-to-noise ratio (SNR)
 - `stim_pres.py`: Code related to stimulus presentation (i.e., flickering stimuli to elicit SSVEP)
 - `maintenence.py`: Code related to listening for the 'esc' key and raising stop flags
 
