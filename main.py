@@ -9,18 +9,18 @@ from pynput import keyboard
 
 ## Adjust As Necessary
 serial_port = 'COM7' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
-board_id = BoardIds.CYTON_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
-frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
+board_id = BoardIds.CYTON_BOARD # BoardIds.UNICORN_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
+# frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
+frequencies = [9.25, 13.25, 17.25, 21.25]
 # buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
 button_pos = [0, 2, 3, 1] # Assigns positions to custom text - must be same length as buttons
 segment_duration = 5 # seconds
-display = 1 # Which screen to display the stimulus paradigm on --> 0 is default
+display = 0 # Which screen to display the stimulus paradigm on --> 0 is default
 
 # Static Variables - Probably don't need to touch :)
 harmonics = np.arange(1, 6) # Generates the 1st, 2nd, & 3rd Harmonics
 sampling_rate = BoardShim.get_sampling_rate(board_id)
 n_samples = sampling_rate * segment_duration 
-
 
 eeg_channels = BoardShim.get_eeg_names(board_id)
 channel_names = ["O1", "O2", "Oz", "Pz", "P3", "P4", "POz", "P1"]
@@ -62,6 +62,7 @@ def main():
     # Initialize the SSVEP Classification & Harmonics handler
     classifier = ClassifySSVEP(frequencies, harmonics, sampling_rate, n_samples, stack_harmonics=False)
     classifier_stacked = ClassifySSVEP(frequencies, harmonics, sampling_rate, n_samples, stack_harmonics=True)
+    fbcca_classifier = FBCCA(frequencies, harmonics, sampling_rate, n_samples)
     
     # Start the stimulus presentation in a separate thread
     stimulus_thread = threading.Thread(target=run_stimulus)
@@ -85,11 +86,18 @@ def main():
                 # Step 3: Use CCA to match the EEG & Reference (harmonic) signals
                     # Unstacked Harmonics (testing)
                 detected_freq, correlation = classifier.cca_analysis(filtered_segment)
-                    # Stacked Harmonics (testing)
-                detected_freq_stacked, correlation_stacked = classifier_stacked.cca_analysis(filtered_segment)
-                
                 print(f"Detected frequency: {detected_freq} Hz with correlation: {correlation}")
-                print(f"Detected *Stacked* frequency: {detected_freq_stacked} Hz with correlation: {correlation_stacked}")
+                
+                detected_freq_stacked, correlation_stacked = classifier_stacked.cca_analysis(filtered_segment)
+                print(f"Stacked CCA: Detected frequency: {detected_freq_stacked} Hz with correlation: {correlation_stacked}")
+
+                detected_freq_fbcca, correlation_fbcca = fbcca_classifier.fbcca_analysis(filtered_segment)
+                print(f"FBCCA: Detected frequency: {detected_freq_fbcca} Hz with correlation: {correlation_fbcca}")
+
+                # Check SNR for each target frequency
+                snr_results = classifier_stacked.check_snr(filtered_segment)
+                for freq, snr in snr_results.items():
+                    print(f"Frequency: {freq} Hz, SNR: {snr:.2f} dB")
 
                 # Optionally save or process the data further
                 # segmenter.save_data(filtered_data, "filtered_data.csv")
@@ -107,6 +115,5 @@ def main():
         
         
         
-
 if __name__ == "__main__":     
     main()
