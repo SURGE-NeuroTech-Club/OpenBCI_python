@@ -35,7 +35,7 @@ def run_stimulus():
     stimulus = SSVEPStimulus(frequencies, box_texts=buttons, box_text_indices=button_pos, show_both=True, display_index=display)
     stimulus.run()
 
-if __name__ == "__main__":     
+def main():
     
     ## Listening for `esc` key to exit
     key_listener = KeyListener()
@@ -103,3 +103,9 @@ if __name__ == "__main__":
     finally:
         board.stop()
         print("\nSession Exited Successfully\n")
+        
+        
+        
+
+if __name__ == "__main__":     
+    main()

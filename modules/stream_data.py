@@ -33,6 +33,8 @@ class BrainFlowBoardSetup:
         self.serial_port = serial_port
         self.params = BrainFlowInputParams()
         self.params.serial_port = self.serial_port
+        self.eeg_channels = BoardShim.get_eeg_channels(self.board_id)
+        self.sampling_rate = BoardShim.get_sampling_rate(self.board_id)
         
         # Set additional parameters if provided
         for key, value in kwargs.items():
@@ -42,6 +44,8 @@ class BrainFlowBoardSetup:
                 print(f"Warning: {key} is not a valid parameter for BrainFlowInputParams")
 
         self.board = None
+        self.session_prepared = False
+        self.streaming = False
 
     def setup(self):
         """
@@ -55,7 +59,7 @@ class BrainFlowBoardSetup:
         try:
             self.board.prepare_session()
             self.session_prepared = True
-            self.board.start_stream()
+            self.board.start_stream(450000)
             self.streaming = True  # Flag to indicate if streaming is active
             print("Board setup and streaming started successfully")
         except BrainFlowError as e:
