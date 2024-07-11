@@ -89,6 +89,7 @@ def main():
                 detected_freq_stacked, correlation_stacked = classifier_stacked.cca_analysis(filtered_segment)
                 
                 print(f"Detected frequency: {detected_freq} Hz with correlation: {correlation}")
+                print(f"Detected *Stacked* frequency: {detected_freq_stacked} Hz with correlation: {correlation_stacked}")
 
                 # Optionally save or process the data further
                 # segmenter.save_data(filtered_data, "filtered_data.csv")
