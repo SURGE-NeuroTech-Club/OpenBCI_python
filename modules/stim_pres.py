@@ -41,7 +41,7 @@ class SSVEPStimulus:
             self.refresh_rate = self.clock.get_fps()
             print(f'Refresh Rate Measured at {self.refresh_rate} Hz')
         else:
-            print(f"Could Not Measure Refresh Rate, opting for default or input of: {refresh_rate} Hz")
+            print(f"Could Not Measure Refresh Rate, Opting for Default or Input of: {refresh_rate} Hz")
             self.refresh_rate = refresh_rate
 
         sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
@@ -135,6 +135,7 @@ if __name__ == "__main__":
     box_frequencies = [8, 10, 12, 14, 16, 18]  # List of frequencies
     box_texts = ["A", "B", "C"]  # List of texts or symbols
     box_text_indices = [0, 2, 4]  # Indices where the texts should be displayed
+    refresh_rate = 60
 
-    stimulus = SSVEPStimulus(box_frequencies, refresh_rate=240, box_texts=box_texts, box_text_indices=box_text_indices, show_both=True, display_index=0)
+    stimulus = SSVEPStimulus(box_frequencies, refresh_rate=refresh_rate, box_texts=box_texts, box_text_indices=box_text_indices, show_both=True, display_index=0)
     stimulus.run()
