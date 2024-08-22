@@ -8,7 +8,7 @@ class SSVEPStimulus:
     Class to handle the stimulus presentation paradigm for an SSVEP BCI system using flickering boxes.
     """
     
-    def __init__(self, box_frequencies, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None, display_index=0):
+    def __init__(self, box_frequencies, refresh_rate=60, box_texts=None, box_text_indices=None, show_both=False, screen_resolution=None, display_index=0):
         """
         Initializes the SSVEPStimulus class.
         """
@@ -36,7 +36,13 @@ class SSVEPStimulus:
         pygame.display.set_caption("Flickering Boxes")
 
         self.clock = pygame.time.Clock()
-        self.refresh_rate = self.clock.get_fps() if self.clock.get_fps() else 60  # Assume 60 if cannot be determined
+
+        if self.clock.get_fps():
+            self.refresh_rate = self.clock.get_fps()
+            print(f'Refresh Rate Measured at {self.refresh_rate} Hz')
+        else:
+            print(f"Could Not Measure Refresh Rate, opting for default or input of: {refresh_rate} Hz")
+            self.refresh_rate = refresh_rate
 
         sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
         interleaved_indices = []
@@ -130,5 +136,5 @@ if __name__ == "__main__":
     box_texts = ["A", "B", "C"]  # List of texts or symbols
     box_text_indices = [0, 2, 4]  # Indices where the texts should be displayed
 
-    stimulus = SSVEPStimulus(box_frequencies, box_texts, box_text_indices, show_both=True, display_index=0)
+    stimulus = SSVEPStimulus(box_frequencies, refresh_rate=240, box_texts=box_texts, box_text_indices=box_text_indices, show_both=True, display_index=0)
     stimulus.run()
