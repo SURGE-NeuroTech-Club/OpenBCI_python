@@ -135,6 +135,15 @@ class SSVEPStimulus:
             actual_frequencies.append(actual_freq)
         return actual_frequencies
 
+    def get_actual_frequencies(self):
+        """
+        Return the actual frequencies calculated for the stimulus presentation.
+        
+        Returns:
+            list of float: The actual frequencies used.
+        """
+        return self.actual_frequencies
+
     def run(self):
         """
         Runs the main loop to handle the stimulus presentation.
@@ -182,10 +191,26 @@ class SSVEPStimulus:
 
 # Example usage
 if __name__ == "__main__":
-    box_frequencies = [8, 10, 12, 14, 16, 18]  # List of desired frequencies
-    box_texts = ["A", "B", "C"]  # List of texts or symbols
-    box_text_indices = [0, 2, 4]  # Indices where the texts should be displayed
-    display_mode = "both"  # Options: "freq", "text", "both"
+    # List of desired frequencies
+    box_frequencies = [8, 10, 12, 14, 16, 18] 
 
-    stimulus = SSVEPStimulus(box_frequencies, box_texts=box_texts, box_text_indices=box_text_indices, display_mode=display_mode)
+    # List of texts or symbols to display on the stimuli
+    box_texts = ["A", "B", "C"]  
+
+    # Indices where the texts should be displayed
+    box_text_indices = [0, 2, 4]  
+
+    # Option to display just "freq", just "text", "both", or None (default)
+    display_mode = "both"  
+
+    stimulus = SSVEPStimulus(box_frequencies, 
+                             box_texts=box_texts, 
+                             box_text_indices=box_text_indices,          
+                             display_mode=display_mode)
+    
+    # Retrieve and print the actual frequencies calculated (usefull for CCA analysis)
+    actual_frequencies = stimulus.get_actual_frequencies()
+    print(f"Calculated Frequencies: {actual_frequencies}")
+
+    # Run the stimulus presentation
     stimulus.run()

@@ -2,43 +2,6 @@
 
 The goal of this repo/library is to make a toolkit for making SSVEP/ERP-based brain-computer interfaces accessible for those who don't have much/any experience.
 
-## Goals:
-
-The outline & functionality is split into categories related to different aspects of BCI's
-
-**Signal Aquisition/Hardware Interfacing:**
-- [ ] Support for OpenBCI Cyton Board
-- [ ] Support for Unicorn
-- [ ] Stream data
-
-**Signal Processing:**
-- [ ] Filters:
-  - [ ] Bandpass
-- [ ] Epoching/Segmenting
-- [ ] 
-
-**Classification:**
-- SSVEP:
-  - [ ] CCA
-  - [ ] FBCCA
-- ERP:
-  - [ ] Training data handler
-  - [ ] LDA
-  - [ ] SVM
-
-**Stimulus Presentation:**
-- [X] SSVEP (working)
-- [ ] Oddball(?)
-
-**Output:**
-- [ ] Output hooks
-  - Easy way for the classifier output to be hooked into performing tasks/executing commands (i.e., the 'computer' part)
-
-**Examples/Tutorials:**
-1. [ ] Data aquisition 
-2. [ ] Filtering
-3. [ ] Stimulus Presentation 
-4. [ ] Classifier
 
 # Notes:
 

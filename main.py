@@ -9,7 +9,7 @@ from pynput import keyboard
 
 ## Adjust As Necessary
 serial_port = 'COM7' # Insert port where Cyton Dongle is inserted. This looks different on MAC/Linux -> "/dev/tty*"
-board_id = BoardIds.CYTON_BOARD # BoardIds.UNICORN_BOARD #BoardIds.SYNTHETIC_BOARD # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
+board_id = BoardIds.SYNTHETIC_BOARD #BoardIds.CYTON_BOARD # BoardIds.UNICORN_BOARD  # Other Boards: https://brainflow.readthedocs.io/en/stable/UserAPI.html#brainflow-board-shim
 # frequencies = [9.25, 11.25, 13.25, 15.25] # Stimulus frequencies; used for CCA & harmonic generation
 frequencies = [9.25, 13.25, 17.25, 21.25]
 # buttons = ['Right', 'Left', 'Up', 'Down'] # Adds custom text to each box - must be same length as frequencies 
