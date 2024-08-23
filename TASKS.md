@@ -28,7 +28,6 @@ The outline & functionality is split into categories related to different aspect
 
 **Stimulus Presentation:**
 - [X] SSVEP (working)
-  - [ ] 
 - [ ] Oddball(?)
 
 **Output:**
