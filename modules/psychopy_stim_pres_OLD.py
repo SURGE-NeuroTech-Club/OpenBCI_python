@@ -32,8 +32,12 @@ class SSVEPStimulus:
         # Measure screen refresh rate
         self.refresh_rate = self.measure_refresh_rate() if refresh_rate is None else refresh_rate
         print(f"Measured Refresh Rate: {self.refresh_rate:.2f} Hz")
-        
-        sorted_indices = sorted(range(len(box_frequencies)), key=lambda i: box_frequencies[i])
+
+        # Calculate actual frequencies that can be shown given the refresh rate
+        self.actual_frequencies = self.calculate_actual_frequencies(box_frequencies)
+        print(f"Actual Frequencies: {self.actual_frequencies}")
+
+        sorted_indices = sorted(range(len(self.actual_frequencies)), key=lambda i: self.actual_frequencies[i])
         interleaved_indices = []
 
         # Interleave frequencies to maximize distance between similar frequencies
@@ -56,18 +60,18 @@ class SSVEPStimulus:
         
         centerX, centerY = 0, 0  # Center of the screen
         radius = min(win.size) // 3  # Radius for circular placement
-        num_boxes = len(box_frequencies)
+        num_boxes = len(self.actual_frequencies)
 
         for i in interleaved_indices:
             angle = 2 * np.pi * i / num_boxes
             pos = (centerX + int(radius * np.cos(angle)), centerY + int(radius * np.sin(angle)))
 
             box = visual.Rect(win=win, width=150, height=150, fillColor='white', lineColor='white', pos=pos)
-            text_stim = visual.TextStim(win=win, text=str(box_frequencies[i]), color='black', pos=pos)
+            text_stim = visual.TextStim(win=win, text=f"{self.actual_frequencies[i]:.2f} Hz", color='black', pos=pos)
             
             self.boxes.append({
                 "box": box,
-                "frequency": box_frequencies[i],
+                "frequency": self.actual_frequencies[i],
                 "text": text_stim,
                 "frame_count": 0,
                 "on": True  # Track whether the box is on or off
@@ -86,6 +90,17 @@ class SSVEPStimulus:
             self.win.flip()
         duration = clock.getTime()
         return n_frames / duration
+
+    def calculate_actual_frequencies(self, desired_frequencies):
+        """
+        Calculate the actual frequencies that can be shown given the measured refresh rate.
+        """
+        actual_frequencies = []
+        for freq in desired_frequencies:
+            frames_per_cycle = round(self.refresh_rate / freq)
+            actual_freq = self.refresh_rate / frames_per_cycle
+            actual_frequencies.append(actual_freq)
+        return actual_frequencies
 
     def run(self):
         """
@@ -111,13 +126,14 @@ class SSVEPStimulus:
                         if not box["on"]:
                             box["on"] = True
                             box["box"].setAutoDraw(True)
+                            if self.show_both and self.box_texts:
+                                box["text"].setAutoDraw(True)
                     else:
                         if box["on"]:
                             box["on"] = False
                             box["box"].setAutoDraw(False)
-
-                    if self.show_both and self.box_texts:
-                        box["text"].draw()
+                            if self.show_both and self.box_texts:
+                                box["text"].setAutoDraw(False)
 
             self.win.flip()
         
@@ -126,7 +142,7 @@ class SSVEPStimulus:
 
 # Example usage
 if __name__ == "__main__":
-    box_frequencies = [8, 10, 12, 14, 16, 18]  # List of frequencies
+    box_frequencies = [7.8, 8, 8.5, 10.5, 12.2, 16, 16.5]  # List of desired frequencies
     box_texts = ["A", "B", "C"]  # List of texts or symbols
     box_text_indices = [0, 2, 4]  # Indices where the texts should be displayed
     refresh_rate = None  # Let the script measure the refresh rate

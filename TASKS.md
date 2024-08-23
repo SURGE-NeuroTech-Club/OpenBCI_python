@@ -1,35 +1,48 @@
-## Tasks/To-Do's:
+# Tasks/To-Do's:
 
-_General Updates_
-- [ ] Make stim_pres better --> Implement Whack-a-pirate
-  - Further apart on screen
-- [ ] Test other filtering methods (brainflow?)
-- [ ] Try FBCCA/other types of classifier
-  - FBCCA ref: https://github.com/NTX-McGill/NeuroTechX-McGill-2021/blob/main/signal/CCA_analysis/predict.py
-  - 
+The goal of this repo/library is to make a toolkit for making SSVEP/ERP-based brain-computer interfaces accessible for those who don't have much/any experience.
+
+## Goals:
+
+The outline & functionality is split into categories related to different aspects of BCI's
+
+**Signal Aquisition/Hardware Interfacing:**
+- [ ] Support for OpenBCI Cyton Board
+- [ ] Support for Unicorn
+- [ ] Stream data
+
+**Signal Processing:**
+- [ ] Filters:
+  - [ ] Bandpass
+- [ ] Epoching/Segmenting
 - [ ] 
 
+**Classification:**
+- SSVEP:
+  - [ ] CCA
+  - [ ] FBCCA
+- ERP:
+  - [ ] Training data handler
+  - [ ] LDA
+  - [ ] SVM
 
+**Stimulus Presentation:**
+- [X] SSVEP (working)
+  - [ ] 
+- [ ] Oddball(?)
 
-_EEG Data Processing/Classification_
-- [X] Get Board data streaming
-- [X] Process Data
-  - [X] Segment Data
-  - [X] Filter [Brainflow/External?] --> **Need to Test!**
-- [X] Signal Generation (harmonics) --> Vishal's code
-  - [X] Test stacked/unstacked harmonics performance (speed & accuracy)
-    - After offline (sim data testing) it seems there is little/no difference in either
-- [X] Feature Extraction/Classification [CCA]
-  - [ ] Feedback/Output Signal --> do something with the output (also handle exceptions?)
+**Output:**
+- [ ] Output hooks
+  - Easy way for the classifier output to be hooked into performing tasks/executing commands (i.e., the 'computer' part)
 
+**Examples/Tutorials:**
+1. [ ] Data aquisition 
+2. [ ] Filtering
+3. [ ] Stimulus Presentation 
+4. [ ] Classifier
 
-_Signal Elicitation/Presentation Paradigm_
-- [X] Make SSVEP paradigm [pygame]
-  - [X] Integrate into program
-  - [x] Test that we can elicit the inteded SSVEP frequencie(s)
-    - Kind of works, maybe!
+# Notes:
 
-Notes:
 **Cyton Board**: streams data in 24 channels
 - 1-8 = EEG
 - 9-11 = Accelerometer Channels
